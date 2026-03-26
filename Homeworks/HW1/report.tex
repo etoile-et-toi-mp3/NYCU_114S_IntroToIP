@@ -1,0 +1,130 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{geometry}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{minted}
+\usepackage{graphicx}
+\usepackage{float}
+
+\geometry{a4paper, left=2cm, right=2cm, top=2cm, bottom=2cm}
+
+\title{Image Processing: Homework 1}
+\author{FU, YONG-WEI (112550107)}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Question 1: Image Capture and Histograms}
+\subsection{Composition Reasoning}
+For this assignment, I chose to take the picture of the exterior structure of the 
+staircase next to the library. I choose this place because I think that by changing 
+the perspectives, I can show two different light intensity on the same scene. One side 
+of it reflects the sunlight pretty well, which easily leads the overexposure as the 
+requirement asks, and the other side of it is in the shadow, which can be underexposed, 
+also meeting the requirement. But still, to meet the requirements, two photos were 
+intentionally overexposed to blow out the sky and bright surfaces into pure white, 
+while two were underexposed to crush the shadows beneath the structure into pure black.
+
+\subsection{Histograms and Results}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Q1_Base_Images/Q1_Histograms_Result.png}
+    \caption{Four captured images converted to grayscale with their respective histograms.}
+\end{figure}
+
+The code for obtaining the histograms can be found in the \texttt{src} folder. Please refer 
+to \texttt{q1\_histogram.py} for details.
+
+\section{Question 2: Noise Generation}
+\subsection{Histogram Analysis}
+I choosed the second darker image to work on, as I found that it has a 
+region that is in the shadows of the structure, which is all black.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Q2_Noise_Results/Q2_Results_Plot.png}
+    \caption{Full images with local bounding boxes (top) and local histograms of the selected smooth region (bottom).}
+\end{figure}
+
+After applying Gaussian noise to the image, in the selected dark region, a 
+significant stacking effect is observed at the lower bound (pixel intensity 0). 
+In the original local histogram, the peak is approximately 5000 pixels, at pixel value 0. 
+After adding Gaussian noise, the peak height increases drastically (to roughly 14,000 for Var=100, and 17,500 for Var=900). 
+This occurs because the initial pixel values are already ``near zero''; when the gaussian distribution applies 
+negative shifts, the values underflow and are clipped at ``exactly zero''. Additionally, 
+as variance increases, the right-side tail of the gaussian distribution becomes noticeably 
+wider, therefore leads to more pixels being shifted to the higher pixel values.
+
+And after applying Salt-and-Pepper noise, the histogram shows a two-peak distribution at 
+the extreme pixel values (0 and 255). The peak at pixel value 0 increases significantly also, 
+as more pixels are randomly set to black. Simultaneously, a new peak emerges at pixel value 255, 
+as some pixels are randomly set to white. The height of both peaks increases with higher noise probability, 
+indicating a bigger impact of the noise on the image.
+
+The code for generating the noise and plotting the histograms can be found in the \texttt{src} 
+folder. Please refer to \texttt{q2\_noise.py} for details.
+
+\section{Question 3: Power-law (Gamma) Transformation}
+\subsection{Contrast Correction}
+To correct the awful contrast we have now, a Power-law transformation 
+($s = c \cdot r^\gamma$) was applied. For the dark image, a fractional exponent 
+($\gamma = 0.4$) was used to lift the dark regions up and reveal shadow details. 
+For the bright image, a larger exponent ($\gamma = 2.5$) was applied to compress 
+the highlights and restore depth.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Q3_Contrast_Results/Q3_Powerlaw_Plot.png}
+    \caption{Contrast correction using Power-law transformation.}
+\end{figure}
+
+The code for applying the Power-law transformation can be found in the 
+\texttt{src} folder. Please refer to \texttt{q3\_powerlaw.py} for details.
+
+\section{Question 4: Creative Edit}
+\subsection{Choice of tool}
+For this creative edit, I still chose to use Python along with the OpenCV and NumPy 
+libraries instead of a traditional photo editing software. Python has a lot of 
+open-source libraries that make image processing tasks straightforward and efficient, 
+and including that I am more comfortable with programming approaches to image manipulation, and 
+also the explanation for the implementation steps can be more precise and detailed, python is a 
+perfect choice for this task. 
+
+\subsection{Implementation and Steps}
+This composite combines the contrast enhancement technique from Question 3 with 
+image matting to create a surreal effect where the building appears to be burning from the deep shadows. 
+As everyone knows that, the 24k library is the place where students study hard, and I always 
+think that for a place like that, the energy around that place should be pretty intense, therefore the idea 
+of fire just came into my mind, thus I decided to create this composite by blending them together.
+The exact steps are as follows:
+
+\begin{enumerate}
+    \item \textbf{Power-law Transformation:} First, I took the original underexposed 
+    image and applied a Power-law transformation with a fractional exponent ($\gamma = 0.4$). 
+    This lifts the dark regions and recovers the original structure so the dark details of the image 
+    is actually visible.
+    \item \textbf{Shadow Masking:} Next, the contrast-corrected image was converted to grayscale. I 
+    applied binary thresholding (with a threshold value of 80) to isolate the remaining extreme dark regions. 
+    This step created a precise binary mask of the shadows.
+    \item \textbf{Image Composition:} Finally, I used bitwise operations 
+    (\texttt{cv2.bitwise\_not} and \texttt{cv2.bitwise\_and}) to extract a 
+    downloaded fire background using the shadow mask. Using \texttt{cv2.add}, 
+    I seamlessly composited the flames exclusively into the dark regions of the 
+    brightened image.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Q4_Creative_Edit/Q4_Creative_Plot.png}
+    \caption{Original dark image, Power-law correction, and final fire composite.}
+\end{figure}
+
+The complete code for this creative edit and image composition can be found in the \texttt{src} folder. Please refer to \texttt{q4\_creative.py} for details.
+
+\end{document}
